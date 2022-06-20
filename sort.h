@@ -2156,7 +2156,7 @@ void SQRT_SORT(SORT_TYPE *arr, size_t Len) {
   int *Tags;
   int NK;
 
-  while (L * L < Len) {
+  while ((size_t)/*safe to cast, since a number multiplied by itself is _always_ positive*/(L * L) < Len) {
     L *= 2;
   }
 
@@ -2900,7 +2900,7 @@ void GRAIL_SORT_DYN_BUFFER(SORT_TYPE *arr, size_t Len) {
   int L = 1;
   SORT_TYPE *ExtBuf;
 
-  while (L * L < Len) {
+  while ((size_t)/*safe to cast, since a number multiplied by itself is _always_ positive*/(L * L) < Len) {
     L *= 2;
   }
 
@@ -2960,13 +2960,13 @@ static void GRAIL_REC_MERGE(SORT_TYPE *A, int L1, int L2) {
 void REC_STABLE_SORT(SORT_TYPE *arr, size_t L) {
   int m, h, p0, p1, rest;
 
-  for (m = 1; m < L; m += 2) {
+  for (m = 1; (size_t)m < L; m += 2) {
     if (SORT_CMP_A(arr + m - 1, arr + m) > 0) {
       GRAIL_SWAP1(arr + (m - 1), arr + m);
     }
   }
 
-  for (h = 2; h < L; h *= 2) {
+  for (h = 2; (size_t)h < L; h *= 2) {
     p0 = 0;
     p1 = (int)(L - 2 * h);
 
