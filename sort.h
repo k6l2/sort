@@ -40,12 +40,32 @@
 #ifndef SORT_COMMON_H
 #define SORT_COMMON_H
 
-#ifndef MAX
-#define MAX(x,y) (((x) > (y) ? (x) : (y)))
+#ifndef SORT_CHECK_CAST_INT_TO_SIZET
+#include <assert.h>
+static size_t _sort_checkCast_int_to_sizet(int x)
+{
+  assert(x >= 0);
+  return (size_t)x;
+}
+#define SORT_CHECK_CAST_INT_TO_SIZET(x) _sort_checkCast_int_to_sizet(x)
 #endif
 
-#ifndef MIN
-#define MIN(x,y) (((x) < (y) ? (x) : (y)))
+#ifndef SORT_CHECK_CAST_SIZET_TO_INT
+#include <assert.h>
+static int _sort_checkCast_sizet_to_int(size_t x)
+{
+  assert(x <= INT_MAX);
+  return (int)x;
+}
+#define SORT_CHECK_CAST_SIZET_TO_INT(x) _sort_checkCast_sizet_to_int(x)
+#endif
+
+#ifndef SORT_MATH_MAX
+#define SORT_MATH_MAX(x,y) (((x) > (y) ? (x) : (y)))
+#endif
+
+#ifndef SORT_MATH_MIN
+#define SORT_MATH_MIN(x,y) (((x) < (y) ? (x) : (y)))
 #endif
 
 static int compute_minrun(const uint64_t);
@@ -112,7 +132,7 @@ static int clzll(uint64_t x) {
 
 static __inline int compute_minrun(const uint64_t size) {
   const int top_bit = 64 - CLZ(size);
-  const int shift = MAX(top_bit, 6) - 6;
+  const int shift = SORT_MATH_MAX(top_bit, 6) - 6;
   const int minrun = (int)(size >> shift);
   const uint64_t mask = (1ULL << shift) - 1;
 
@@ -223,11 +243,11 @@ static __inline size_t rbnd(size_t len) {
 #define SQRT_SORT_COMMON_SORT          SORT_MAKE_STR(sqrt_sort_common_sort)
 #define BUBBLE_SORT                    SORT_MAKE_STR(bubble_sort)
 
-#ifndef MAX
-#define MAX(x,y) (((x) > (y) ? (x) : (y)))
+#ifndef SORT_MATH_MAX
+#define SORT_MATH_MAX(x,y) (((x) > (y) ? (x) : (y)))
 #endif
-#ifndef MIN
-#define MIN(x,y) (((x) < (y) ? (x) : (y)))
+#ifndef SORT_MATH_MIN
+#define SORT_MATH_MIN(x,y) (((x) < (y) ? (x) : (y)))
 #endif
 #ifndef SORT_CSWAP
 #define SORT_CSWAP(x, y) { if(SORT_CMP((x),(y)) > 0) {SORT_SWAP((x),(y));}}
@@ -1572,7 +1592,7 @@ static void TIM_SORT_MERGE(SORT_TYPE *dst, const TIM_SORT_RUN_T *stack, const in
   const size_t curr = stack[stack_curr - 2].start;
   SORT_TYPE *storage;
   size_t i, j, k;
-  TIM_SORT_RESIZE(store, MIN(A, B));
+  TIM_SORT_RESIZE(store, SORT_MATH_MIN(A, B));
   storage = store->storage;
 
   /* left merge */
@@ -1742,7 +1762,7 @@ void TIM_SORT(SORT_TYPE *dst, const size_t size) {
   }
 
   /* compute the minimum run length */
-  minrun = compute_minrun(size);
+  minrun = SORT_CHECK_CAST_INT_TO_SIZET(compute_minrun(size));
   /* temporary storage for merges */
   store = &_store;
   store->alloc = 0;
@@ -1761,8 +1781,8 @@ void TIM_SORT(SORT_TYPE *dst, const size_t size) {
   }
 
   while (1) {
-    if (!CHECK_INVARIANT(run_stack, (int)stack_curr)) {
-      stack_curr = TIM_SORT_COLLAPSE(dst, run_stack, (int)stack_curr, store, size);
+    if (!CHECK_INVARIANT(run_stack, SORT_CHECK_CAST_SIZET_TO_INT(stack_curr))) {
+      stack_curr = SORT_CHECK_CAST_INT_TO_SIZET(TIM_SORT_COLLAPSE(dst, run_stack, SORT_CHECK_CAST_SIZET_TO_INT(stack_curr), store, size));
       continue;
     }
 
@@ -2161,7 +2181,7 @@ void SQRT_SORT(SORT_TYPE *arr, size_t Len) {
   }
 
   NK = (int)((Len - 1) / L + 2);
-  ExtBuf = SORT_NEW_BUFFER(L);
+  ExtBuf = SORT_NEW_BUFFER(SORT_CHECK_CAST_INT_TO_SIZET(L));
 
   if (ExtBuf == NULL) {
     return;  /* fail */
@@ -2755,7 +2775,7 @@ static void GRAIL_COMBINE_BLOCKS(SORT_TYPE *keys, SORT_TYPE *arr, int len, int L
 
     arr1 = arr + b * 2 * LL;
     NBlk = (b == M ? lrest : 2 * LL) / lblock;
-    SMALL_STABLE_SORT(keys, NBlk + (b == M ? 1 : 0));
+    SMALL_STABLE_SORT(keys, SORT_CHECK_CAST_INT_TO_SIZET(NBlk + (b == M ? 1 : 0)));
     midkey = LL / lblock;
 
     for (u = 1; u < NBlk; u++) {
@@ -2818,7 +2838,7 @@ static void GRAIL_COMMON_SORT(SORT_TYPE *arr, int Len, SORT_TYPE *extbuf, int LE
   long long s;
 
   if (Len <= SMALL_SORT_BND) {
-    SMALL_STABLE_SORT(arr, Len);
+    SMALL_STABLE_SORT(arr, SORT_CHECK_CAST_INT_TO_SIZET(Len));
     return;
   }
 
@@ -2883,7 +2903,7 @@ static void GRAIL_COMMON_SORT(SORT_TYPE *arr, int Len, SORT_TYPE *extbuf, int LE
                          && lb <= LExtBuf ? extbuf : NULL);
   }
 
-  SMALL_STABLE_SORT(arr, ptr);
+  SMALL_STABLE_SORT(arr, SORT_CHECK_CAST_INT_TO_SIZET(ptr));
   GRAIL_MERGE_WITHOUT_BUFFER(arr, ptr, Len - ptr);
 }
 
@@ -2904,7 +2924,7 @@ void GRAIL_SORT_DYN_BUFFER(SORT_TYPE *arr, size_t Len) {
     L *= 2;
   }
 
-  ExtBuf = SORT_NEW_BUFFER(L);
+  ExtBuf = SORT_NEW_BUFFER(SORT_CHECK_CAST_INT_TO_SIZET(L));
 
   if (ExtBuf == NULL) {
     GRAIL_SORT_FIXED_BUFFER(arr, Len);
